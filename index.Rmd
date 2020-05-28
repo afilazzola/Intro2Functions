@@ -17,6 +17,10 @@ output:
 
 ![](function.jpg)
 
+```{r,  warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggthemes)
+```
 
 ### Introduction
 
@@ -41,7 +45,6 @@ The format of function is fairly simple:
 
 Here arguments can be any lists of text or characters that will later be used within the formula. Within the function, the operate will have two general components. Firstly, the portion of the function that will remain unchanged each time it is used. The second are the arguments that will be changed each time. 
 
-Ex.1
 ```{r}
 ## Write the first function
 plus1 <- function(x){
@@ -52,10 +55,19 @@ plus1(x=5)
 
 For these functions there are two items that will remain unchanged. The first is the calculation. In the above example, the addition operation will not change and remains the same. These types of functions are useful when you have a particular index that you are trying to calculate, but the inputs will keep changing. 
 
+For instance say you want to convert degrees to radians. The function you would write would be this. 
 
+```{r}
+deg2rad <- function(deg) {
+  (deg * pi) / (180)
+}
 
+deg2rad(90)
 
-Ex.2
+## For simpler functions you can write them as one line
+deg2rad <- function(deg) {(deg * pi) / (180)} 
+
+```
 
 Log response ratio is a calculation when comparing two groups based on a treatment vs control format. 
 
@@ -68,7 +80,7 @@ LRR(treatment=30, control=20)
 
 Here we see that the log response ratio of our two individuals. Specifying the treatments is not entirely necessary. Depending on how you set up your arguments, R will assume your inputs will be in the order that they are presented. The function can also handle any type of data format such as number, vector, shapefile, dataframe, etc, just as long as what is specified within the function can handle it.
 
-Ex.3
+
 ```{r}
 treat1 = c(30,40,50,35,45,55)
 control1= c(20,25,30,23,25,20)
@@ -76,87 +88,154 @@ LRR(treat1, control1)
 ```
 
 
-To drive home the point a bit more, you can even embed functions within functions. Something that actually becomes more useful that you may believe. 
-
-Ex.4 
+You can also utilize functions alreay present within R. 
 
 ```{r}
 ## Create function to calculate average
 average <- function(x){
   sum(x)/length(x) 
 }
+
 ## assign LRR to object
-experiment.results <- LRR(treat1, control1)
+results <- LRR(treat1, control1)
 ## calculate the average of results from LRR
-average(experiment.results)
+average(results)
 ```
 
-The second major component of a function that remains consistent between its usage are particular settings. This is especially true when you are trying to run some form of analyses that have specific assumptions, weightings, or syntax. 
-
-For example, imagining you would like to run a series of Generalized linear models with specific settings, such as poisson family. The function would look as such:
-
+There is no standard error function present in base R, so this simple formula below is probably one that I use the most. 
 ```{r}
-glm.pois <- function(predictor,response){
-m1 <- glm(y~x, family=poisson) ## glm formula with poisson family
-anova(m1, test="Chisq") ## test for difference
-}
-y <- rpois(10,5) ## create random poisson distribution
-x <- rep(c("group1","group2"),5) ## create random grouping variable
-glm.pois(x,y)
+se <- function(x){ sd(x)/sqrt(length(x)) } ## sd/sqrt(n)
 ```
 
 ### Functions for plots
 
-Creating plots in R is difficult. The aesthetic component is getting better and packages such as ggplot2 help format plots to be more appealing. However, defaults are not ideal and often not publication quality. It can be helpful to create a function that matches your ideal plot archetype and then edit the inputs only. 
+Creating plots requires a lot of ajustments. The aesthetic component is getting better and packages such as ggplot2 help format plots to be more appealing. However, defaults are not ideal and often not publication quality. It can be helpful to create a function that matches your ideal plot archetype and then edit the inputs only. 
 
 Lets use the cars dataset to conduct and plot a correlation
 
 ```{r}
-cars
+plot(cars$speed, cars$dist)
 ```
 
-We can use default plot to see the output. On our first look we can see the output is less than ideal. To resolve this I will load an R script using the `source` function. This way I can pull all my prefered defaults.
-
-Ex.5
+On default this plot is pretty ugly. Let's try and make it better
 ```{r}
-plot(cars)
-plot.better <- function(x,y,...){
-  plot(x,y, pch=21, cex=2, cex.axis=1.3, cex.lab=1.5, bg="Grey70",...)
+## Improve the aesthetic of my plot
+par(mar = c(4.5, 4.5, 0.5, 0.5))
+plot(cars$speed, cars$dist, pch=19, cex.axis=1.3, cex.lab=1.5, frame.plot = F)
+
+## Revise it as a function
+myscatter <- function(x, y){
+par(mar = c(4.5, 4.5, 0.5, 0.5))
+plot(x, y, pch=19, cex.axis=1.3, cex.lab=1.5, frame.plot = F)
 }
-plot.better(cars[,"speed"],cars[,"dist"], xlab="speed", ylab="distance")
+## Test function
+myscatter(cars$speed, cars$dist)
+
 ```
 
-Here, I have added the `...` syntax. This allows for the specification of additional arugments that can be present within your function that are likely to change each time you use the function. This is helpful because you can combine arguments that will remain static, arguments that will always change, and arguments that will change only some of the time. 
+The scatter plot is looking good but realistically there are thing you are going to want to change. For instance, the x and y labels. 
+
+```{r}
+## Ellipses allow for optional arugments to be passed
+myscatter <- function(x, y, ...){ 
+par(mar = c(4.5, 4.5, 0.5, 0.5))
+plot(x, y, pch=19, cex.axis=1.3, cex.lab=1.5, frame.plot = F, ...)
+}
+## Continue plotting all the same
+myscatter(cars$speed, cars$dist, xlab="Speed (kph)", ylab="Distance (km)")
+
+
+## Ovewrite new defaults
+myscatter(cars$speed, cars$dist, xlab="Speed (kph)", ylab="Distance (km)", cex.lab=1.8, cex.axis=1.1)
+```
+
+But I use ggplot...
+```{r warning=FALSE, message=FALSE}
+source("functions.r") ## Using source to port over complex functions
+
+## Default
+ggplot(data=cars, aes(x=speed, y=dist)) + geom_point()
+
+## With functions
+ggplot(data=cars, aes(x=speed, y=dist)) + geom_point() + theme_Publication()
+
+```
+
 
 
 ### Functions for summaries
 
-The reason I find functions so helpful is that they can be embeded into other functions or automation tools in R. The apply family is a perfect example of this and what we will be covering shortly. However, I want to give a quick example using another method. The function `aggregate` in R is useful for acquiring summary statistics by a certain variable. The syntax is similar to a linear model and can be present as `response ~ predictor`. The third argument is the function you would like to apply to this. Typically, I use `mean` to get averages per treatment, but there are a whole host of other metrics that could be used as well. 
+The reason I find functions so helpful is that they can be embeded into other vector analyses or automation tools. Calculating summary statistics or metrics can be improved vastly using functions. 
 
-Let us first start with a dataset with two drug treatments and a control on 60 individuals. 
-
-Ex.6
-```{r}
-response <- c(4.31068872,4.02239617,5.63827473,7.72906176,7.35096786,4.2539145,7.9450572,3.5814285,6.430872,4.64378698,3.55665898,4.99139648,4.036698,5.46499184,3.85910911,3.5291655,5.90729568,5.674248,7.23597678,4.39489848,7.63737,9.6482263,7.28738049,7.4192216,10.59532723,9.2013317,9.4829496,7.1599644,6.940219,7.30966038,7.10753942,9.28011484,8.97616,9.08440512,7.2778324,7.8634062,8.15142375,8.9925216,8.69784123,5.5644162,10.92730496,10.1363948,9.41244444,10.263204,11.38765203,13.2568931,14.4508848,7.5576591,8.530619,12.19368536,6.74443276,13.08433484,10.727451,13.27716208,9.49188068,9.8798724,10.98806094,9.79678656,10.81542819,7.57395576)
-treatment <- c(rep("control",20),rep("drugA",20),rep("drugB",20))
-data <- data.frame(treatment, response)
-data
-## calculate means for each treatment
-aggregate(response~treatment, data=data, FUN=mean)
-```
-
-Here we calculated the mean for each treatment by specifying which function will opperate on the treatment group. This does not be restricted to functions in R base.It could also be expanded to include items such as linear models, complex index calculations, or anything else that is applied at the group level. Let's try it with a user defined function
+Let's explore a grazed and ungrazed system for the amount of residual dry matter (thatch) at the end of the season (50 quadrats each).
 
 
 ```{r}
-## function for standard error
-se <- function(x) sqrt(var(x)/length(x))
-aggregate(response~treatment, data=data, FUN=se)
-## calculate confidence intervals
-conf95 <- function(x)   {(sqrt(var(x,na.rm=T)/length(na.omit(x))))*1.96}
-aggregate(response~treatment, data=data, FUN=conf95)
+## Make up dataframe
+data <- data.frame(treatment = rep(c("grazed","ungrazed"), each=50),
+  biomass = c( rnorm(50, 10, 2), rnorm(50, 15, 2)))
+
+## calculate 95% conf interval for each treatment
+aggregate(biomass~treatment, data=data, FUN=se)
+
+
+## Dplyr version
+data %>% group_by(treatment) %>% summarize(avg=mean(biomass), error=se(biomass))
+
+## Getting fancy
+data %>% group_by(treatment) %>% summarize(avg=mean(biomass), error=se(biomass), lower95=avg+error*1.96, upper95=avg+error*1.96)
+
 ```
 
-There are similar utilizations in `tidyverse` within `dplyr` such as:
+What if we wanted to make a function that calculates all this for us rather than doing it by hand. 
+```{r}
+summarystat <- function(x){
+  avg <- mean(x)
+  error <- se(x)
+  lower95 <- avg+error*1.96
+  upper95 <- avg+error*1.96
+  statOut <- c(avg, error, lower95, upper95)
+  return(statOut) ## need to specify what you out
+}
+summarystat(rnorm(20, 5, 2)) ## not very informative
 
-`data %>% group_by(site)  %>% summarize(temp.avg=mean(temperature),temp.se=conf95(temperature)`
+
+summarystat <- function(x){
+  avg <- mean(x)
+  error <- se(x)
+  lower95 <- avg+error*1.96
+  upper95 <- avg+error*1.96
+  statOut <- data.frame(avg, error, lower95, upper95)
+  return(statOut)
+}
+summarystat(rnorm(20, 5, 2)) ## much better
+
+```
+
+Integrating functions that produce unequal outputs can be difficult. Vector analyses sometimes don't appreciate that. 
+```{r eval=F}
+data %>% group_by(treatment) %>% summarize(summarystat(biomass)) ## error
+```
+```{r}
+data %>% group_by(treatment) %>% do(summarystat(.$biomass)) ## error
+
+```
+
+Final exploration using the apply family. Apply allows you to iterate across data. This could be up-down, left-right in dataframes or it can across lists, raster stacks, etc etc. We are going to use a simple example of top-down with our function.
+
+```{r}
+datacomp <- data.frame(species = rep(c("Plantago","Poa"), each=50),
+                       withNeighbour=rnorm(50,5,1),
+                       alone = rnorm(50, 7,2))
+
+head(datacomp)
+
+zscore <- function(x){
+  x - mean(x)/sd(x)
+}
+
+apply(datacomp[,2:3], 2, zscore)
+
+
+
+```
