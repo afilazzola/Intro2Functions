@@ -1,0 +1,162 @@
+---
+title: "Function (Intro)"
+author: "Alex Filazzola"
+date: "May 28, 2020"
+output:
+  html_document:
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+### Introduction to R functions
+
+
+![](function.jpg)
+
+
+### Introduction
+
+Writing functions is a fundamental component of programming and therefore scares many people. However! Functions can be easier than you'd think. For example, think of what *your* perfect bar plot looks like. How much time do you spend making your bar plots look like that? Wouldn't it be great if the very first time you plotted a barplot it looked exactly the way you wanted it to? With functions you can do that, and all the knowledge you'd need is how to make the barplot look the way you want. This works shop gives a quick overview of how to use functions to make your life easier. Demonstrations will be done in R, but are applicable to most languages. 
+
+One of the more powerful aspects of programming languages relative GUI statistical softwares is the ability to create functions. Functions are extremely powerful because they allow for the automation of repetitive tasks and reduce bloated code from the more traditional "copy-paste" format. This becomes extremely powerful when combined with the apply family or loops. However, even for simple tasks, functions can make your life easier. 
+
+Why use functions?
+
+* save complicated operations or mathematical calculations
+* reduce repetitive tasks
+* standardize formats (e.g. plots, maps, etc)
+* combine with apply family for automation of tasks
+
+### Function Syntax
+
+The format of function is fairly simple:
+
+`function.name <- function(arguments){`
+`arguments + operation`
+`}`
+
+Here arguments can be any lists of text or characters that will later be used within the formula. Within the function, the operate will have two general components. Firstly, the portion of the function that will remain unchanged each time it is used. The second are the arguments that will be changed each time. 
+
+Ex.1
+```{r}
+## Write the first function
+plus1 <- function(x){
+x+1 ## the arugment and operation
+}
+plus1(x=5)
+```
+
+For these functions there are two items that will remain unchanged. The first is the calculation. In the above example, the addition operation will not change and remains the same. These types of functions are useful when you have a particular index that you are trying to calculate, but the inputs will keep changing. 
+
+
+
+
+Ex.2
+
+Log response ratio is a calculation when comparing two groups based on a treatment vs control format. 
+
+```{r}
+LRR <- function(treatment,control){
+  log(treatment/control)
+}
+LRR(treatment=30, control=20)
+```
+
+Here we see that the log response ratio of our two individuals. Specifying the treatments is not entirely necessary. Depending on how you set up your arguments, R will assume your inputs will be in the order that they are presented. The function can also handle any type of data format such as number, vector, shapefile, dataframe, etc, just as long as what is specified within the function can handle it.
+
+Ex.3
+```{r}
+treat1 = c(30,40,50,35,45,55)
+control1= c(20,25,30,23,25,20)
+LRR(treat1, control1)
+```
+
+
+To drive home the point a bit more, you can even embed functions within functions. Something that actually becomes more useful that you may believe. 
+
+Ex.4 
+
+```{r}
+## Create function to calculate average
+average <- function(x){
+  sum(x)/length(x) 
+}
+## assign LRR to object
+experiment.results <- LRR(treat1, control1)
+## calculate the average of results from LRR
+average(experiment.results)
+```
+
+The second major component of a function that remains consistent between its usage are particular settings. This is especially true when you are trying to run some form of analyses that have specific assumptions, weightings, or syntax. 
+
+For example, imagining you would like to run a series of Generalized linear models with specific settings, such as poisson family. The function would look as such:
+
+```{r}
+glm.pois <- function(predictor,response){
+m1 <- glm(y~x, family=poisson) ## glm formula with poisson family
+anova(m1, test="Chisq") ## test for difference
+}
+y <- rpois(10,5) ## create random poisson distribution
+x <- rep(c("group1","group2"),5) ## create random grouping variable
+glm.pois(x,y)
+```
+
+### Functions for plots
+
+Creating plots in R is difficult. The aesthetic component is getting better and packages such as ggplot2 help format plots to be more appealing. However, defaults are not ideal and often not publication quality. It can be helpful to create a function that matches your ideal plot archetype and then edit the inputs only. 
+
+Lets use the cars dataset to conduct and plot a correlation
+
+```{r}
+cars
+```
+
+We can use default plot to see the output. On our first look we can see the output is less than ideal. To resolve this I will load an R script using the `source` function. This way I can pull all my prefered defaults.
+
+Ex.5
+```{r}
+plot(cars)
+plot.better <- function(x,y,...){
+  plot(x,y, pch=21, cex=2, cex.axis=1.3, cex.lab=1.5, bg="Grey70",...)
+}
+plot.better(cars[,"speed"],cars[,"dist"], xlab="speed", ylab="distance")
+```
+
+Here, I have added the `...` syntax. This allows for the specification of additional arugments that can be present within your function that are likely to change each time you use the function. This is helpful because you can combine arguments that will remain static, arguments that will always change, and arguments that will change only some of the time. 
+
+
+### Functions for summaries
+
+The reason I find functions so helpful is that they can be embeded into other functions or automation tools in R. The apply family is a perfect example of this and what we will be covering shortly. However, I want to give a quick example using another method. The function `aggregate` in R is useful for acquiring summary statistics by a certain variable. The syntax is similar to a linear model and can be present as `response ~ predictor`. The third argument is the function you would like to apply to this. Typically, I use `mean` to get averages per treatment, but there are a whole host of other metrics that could be used as well. 
+
+Let us first start with a dataset with two drug treatments and a control on 60 individuals. 
+
+Ex.6
+```{r}
+response <- c(4.31068872,4.02239617,5.63827473,7.72906176,7.35096786,4.2539145,7.9450572,3.5814285,6.430872,4.64378698,3.55665898,4.99139648,4.036698,5.46499184,3.85910911,3.5291655,5.90729568,5.674248,7.23597678,4.39489848,7.63737,9.6482263,7.28738049,7.4192216,10.59532723,9.2013317,9.4829496,7.1599644,6.940219,7.30966038,7.10753942,9.28011484,8.97616,9.08440512,7.2778324,7.8634062,8.15142375,8.9925216,8.69784123,5.5644162,10.92730496,10.1363948,9.41244444,10.263204,11.38765203,13.2568931,14.4508848,7.5576591,8.530619,12.19368536,6.74443276,13.08433484,10.727451,13.27716208,9.49188068,9.8798724,10.98806094,9.79678656,10.81542819,7.57395576)
+treatment <- c(rep("control",20),rep("drugA",20),rep("drugB",20))
+data <- data.frame(treatment, response)
+data
+## calculate means for each treatment
+aggregate(response~treatment, data=data, FUN=mean)
+```
+
+Here we calculated the mean for each treatment by specifying which function will opperate on the treatment group. This does not be restricted to functions in R base.It could also be expanded to include items such as linear models, complex index calculations, or anything else that is applied at the group level. Let's try it with a user defined function
+
+
+```{r}
+## function for standard error
+se <- function(x) sqrt(var(x)/length(x))
+aggregate(response~treatment, data=data, FUN=se)
+## calculate confidence intervals
+conf95 <- function(x)   {(sqrt(var(x,na.rm=T)/length(na.omit(x))))*1.96}
+aggregate(response~treatment, data=data, FUN=conf95)
+```
+
+There are similar utilizations in `tidyverse` within `dplyr` such as:
+
+`data %>% group_by(site)  %>% summarize(temp.avg=mean(temperature),temp.se=conf95(temperature)`
